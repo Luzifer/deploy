@@ -83,6 +83,9 @@ func (s storageLocal) GetLatestDeployment(identifier string) (string, error) {
 func (s storageLocal) GetDeploymentArtifact(identifier, deploymentID string) (io.ReaderAt, int64, error) {
 	rawZip, err := ioutil.ReadFile(path.Join(s.path, identifier+deploymentID+".zip"))
 	if err != nil {
+		if os.IsNotExist(err) {
+			err = errNoSuchDeployment
+		}
 		return nil, 0, err
 	}
 

@@ -86,7 +86,7 @@ type appspecHook struct {
 func (a appspecHook) Execute(zipFile *zip.Reader) error {
 	var (
 		err    error
-		script io.ReadCloser = nil
+		script io.ReadCloser
 	)
 
 	for _, f := range zipFile.File {
