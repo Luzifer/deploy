@@ -1,6 +1,6 @@
 # Contentflow / deploy
 
-`deploy` is a smll pull-based deployment daemon following some of the principles AWS CodeDeploy is using. The deployment artifact is roughly compatible between the two systems while some attributes are ignored. Also there is no central API containing information about deployments: The latest deployment is derived from the update time of the artifacts found in the respective storage provider.
+`deploy` is a small pull-based deployment daemon following some of the principles AWS CodeDeploy is using. The deployment artifact is roughly compatible between the two systems while some attributes are ignored. Also there is no central API containing information about deployments: The latest deployment is derived from the update time of the artifacts found in the respective storage provider.
 
 ## Configuration
 
