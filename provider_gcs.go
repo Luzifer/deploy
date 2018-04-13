@@ -17,9 +17,10 @@ import (
 func init() { registerStorageProvider(&storageGCS{}) }
 
 type storageGCS struct {
-	bucket *storage.BucketHandle
-	client *storage.Client
-	prefix string
+	bucket     *storage.BucketHandle
+	bucketName string
+	client     *storage.Client
+	prefix     string
 }
 
 // InitializeFromURI retrieves the user input URI and must decide whether
@@ -36,14 +37,18 @@ func (s *storageGCS) InitializeFromURI(uri string) error {
 		return errInitializationNotPossible
 	}
 
-	s.prefix = u.Path
+	s.bucketName = u.Host
+	s.prefix = strings.TrimPrefix(u.Path, "/")
+	if len(s.prefix) > 0 {
+		s.prefix = s.prefix + "/"
+	}
 
 	s.client, err = storage.NewClient(context.Background())
 	if err != nil {
 		return err
 	}
 
-	s.bucket = s.client.Bucket(u.Host)
+	s.bucket = s.client.Bucket(s.bucketName)
 	return nil
 }
 
@@ -54,7 +59,8 @@ func (s storageGCS) GetLatestDeployment(identifier string) (string, error) {
 	deployments := []*storage.ObjectAttrs{}
 
 	it := s.bucket.Objects(context.Background(), &storage.Query{
-		Prefix: s.prefix,
+		Delimiter: "/",
+		Prefix:    s.prefix,
 	})
 
 	for {
@@ -67,7 +73,7 @@ func (s storageGCS) GetLatestDeployment(identifier string) (string, error) {
 			return "", err
 		}
 
-		if strings.HasPrefix(attr.Name, identifier) && strings.HasSuffix(attr.Name, ".zip") {
+		if strings.HasPrefix(attr.Name, path.Join(s.prefix, identifier)) && strings.HasSuffix(attr.Name, ".zip") {
 			deployments = append(deployments, attr)
 		}
 	}
@@ -81,7 +87,7 @@ func (s storageGCS) GetLatestDeployment(identifier string) (string, error) {
 	})
 
 	deploymentID := deployments[len(deployments)-1].Name
-	deploymentID = strings.TrimPrefix(deploymentID, identifier)
+	deploymentID = strings.TrimPrefix(deploymentID, path.Join(s.prefix, identifier))
 	deploymentID = strings.TrimSuffix(deploymentID, ".zip")
 	return deploymentID, nil
 }
@@ -108,5 +114,5 @@ func (s storageGCS) GetDeploymentArtifact(identifier, deploymentID string) (io.R
 
 // String must return a string representation of the provider for debug logging
 func (s storageGCS) String() string {
-	return fmt.Sprintf("GCE provider at bucket %q with prefix %q", s.bucket, s.prefix)
+	return fmt.Sprintf("GCE provider at bucket %q with prefix %q", s.bucketName, s.prefix)
 }
