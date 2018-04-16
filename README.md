@@ -10,6 +10,7 @@ Usage of deploy:
   -c, --fetch-cron string   When to query for new deployments (cron syntax) (default "* * * * *")
   -i, --identifier string   Software identifier to query deployments for (default "default")
       --log-level string    Log level (debug, info, warn, error, fatal) (default "info")
+  -r, --reporter strings    Reporting URIs to notify about deployments
   -s, --storage string      URI for the storage provider to use
       --version             Prints current version and exits
 ```
@@ -41,3 +42,20 @@ _This provider mainly is meant for testing and debugging purposes!_
 
 Storage URI format: `file://<path>` (Example: `file:///tmp/deploy` which would load `/tmp/deploy/defaultxyz123.zip` file in above mentioned example)
 
+### Reporting provider: Slack
+
+Reporting URI format: `slack+https://hooks.slack.com/services/...` where the part starting with `https://` is what Slack gives you when creating an incoming slack hook.
+
+There are no settings for channel, bot name or icon: You need to put those in the hook configuration.
+
+### Reporting provider: Local
+
+Reporting URI format: `file://<path>` (Example: `file:///var/log/deploy-{s}-{t}.log` which would write `/var/log/deploy-default-2018-04-16T14-59-40.log` log file.
+
+Variables to be used in the URI:
+
+- `{d}` - Current time in format `2006-01-02`
+- `{h}` - Hostname
+- `{i}` - Deployment ID
+- `{s}` - Software Identifier
+- `{t}` - Current time in format `2006-01-02T15-04-05`

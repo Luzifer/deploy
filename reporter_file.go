@@ -37,10 +37,11 @@ func (r *reporterFile) InitializeFromURI(uri string) error {
 func (r reporterFile) Execute(success bool, content, deploymentID, hostname string) error {
 	fileName := r.path
 	for k, v := range map[string]string{
-		`%i`: cfg.SoftwareIdentifier,
-		`%d`: deploymentID,
-		`%h`: hostname,
-		`%t`: time.Now().Format(`2006-01-02T15-04-05`),
+		`{s}`: cfg.SoftwareIdentifier,
+		`{i}`: deploymentID,
+		`{h}`: hostname,
+		`{t}`: time.Now().Format(`2006-01-02T15-04-05`),
+		`{d}`: time.Now().Format(`2006-01-02`),
 	} {
 		fileName = strings.Replace(fileName, k, v, -1)
 	}
