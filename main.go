@@ -79,7 +79,7 @@ func main() {
 
 		logger.Debug("Starting deployment")
 
-		if err := executeDeployment(storage, deployment); err != nil {
+		if err := executeDeployment(storage, deployment, logger); err != nil {
 			logger.WithError(err).Error("Deployment failed")
 			continue
 		}
@@ -89,7 +89,7 @@ func main() {
 	}
 }
 
-func executeDeployment(storage storageProvider, deploymentIdentifer string) error {
+func executeDeployment(storage storageProvider, deploymentIdentifer string, logger *log.Entry) error {
 	deployZipRaw, size, err := storage.GetDeploymentArtifact(cfg.SoftwareIdentifier, deploymentIdentifer)
 	if err != nil {
 		return fmt.Errorf("Unable to fetch deployment ZIP: %s", err)
@@ -105,5 +105,5 @@ func executeDeployment(storage storageProvider, deploymentIdentifer string) erro
 		return err
 	}
 
-	return as.Execute(zipFile)
+	return as.Execute(zipFile, logger)
 }

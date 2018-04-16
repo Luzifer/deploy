@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -83,7 +84,7 @@ type appspecHook struct {
 	RunAs    string `yaml:"runas"`
 }
 
-func (a appspecHook) Execute(zipFile *zip.Reader) error {
+func (a appspecHook) Execute(zipFile *zip.Reader, logger *log.Entry) error {
 	var (
 		err    error
 		script io.ReadCloser
@@ -111,9 +112,15 @@ func (a appspecHook) Execute(zipFile *zip.Reader) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(a.Timeout)*time.Second)
 	defer cancel()
 
+	stdout := logger.WriterLevel(log.InfoLevel)
+	defer stdout.Close()
+	stderr := logger.WriterLevel(log.ErrorLevel)
+	defer stderr.Close()
+
 	cmd := exec.CommandContext(ctx, "/bin/bash")
 	cmd.Stdin = script
-	// TODO: Handle stderr / stdout
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 
 	// OS specific function, see in appspec_GOOS.go files
 	if err := a.setRunAs(cmd); err != nil {
@@ -149,7 +156,7 @@ func parseZIPAppSpec(zipFile *zip.Reader) (*appspec, error) {
 }
 
 // Execute runs the directives specified inside the appspec definition
-func (a appspec) Execute(zipFile *zip.Reader) error {
+func (a appspec) Execute(zipFile *zip.Reader, logger *log.Entry) error {
 	if err := a.Validate(); err != nil {
 		return err
 	}
@@ -162,7 +169,7 @@ func (a appspec) Execute(zipFile *zip.Reader) error {
 
 	if hooks, ok := a.Hooks["BeforeInstall"]; ok {
 		for _, hook := range hooks {
-			if err := hook.Execute(zipFile); err != nil {
+			if err := hook.Execute(zipFile, logger); err != nil {
 				return fmt.Errorf("Hook \"BeforeInstall\" failed: %s", err)
 			}
 		}
@@ -178,7 +185,7 @@ func (a appspec) Execute(zipFile *zip.Reader) error {
 	for _, hookName := range []string{"AfterInstall", "ApplicationStart", "ValidateService"} {
 		if hooks, ok := a.Hooks[hookName]; ok {
 			for _, hook := range hooks {
-				if err := hook.Execute(zipFile); err != nil {
+				if err := hook.Execute(zipFile, logger); err != nil {
 					return fmt.Errorf("Hook %q failed: %s", hookName, err)
 				}
 			}
