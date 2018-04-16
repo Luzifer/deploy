@@ -13,11 +13,16 @@ import (
 
 var quotingRequired = regexp.MustCompile(`[^a-zA-Z0-9_/@^+.-]`)
 
+// BufferHook is a logrus hook to cache log messages into a buffer to
+// be used in reporting later on. As bytes.Buffer is included in this
+// struct all methods of it can be used.
 type BufferHook struct {
-	buf    *bytes.Buffer
 	levels []logrus.Level
+
+	bytes.Buffer
 }
 
+// New creates a new BufferHook instance
 func New(level logrus.Level) *BufferHook {
 	levels := []logrus.Level{}
 	for _, l := range []logrus.Level{
@@ -34,19 +39,18 @@ func New(level logrus.Level) *BufferHook {
 	}
 
 	return &BufferHook{
-		buf:    new(bytes.Buffer),
 		levels: levels,
 	}
 }
 
+// Levels returns the enabled levels for this hook (interface logrus.Hook)
 func (b BufferHook) Levels() []logrus.Level { return b.levels }
 
+// Fire retrieves the event and generates the log line (interface logrus.Hook)
 func (b BufferHook) Fire(e *logrus.Entry) error {
-	_, err := b.buf.Write(b.formatLine(e))
+	_, err := b.Write(b.formatLine(e))
 	return err
 }
-
-func (b BufferHook) String() string { return b.buf.String() }
 
 func (b BufferHook) formatLine(entry *logrus.Entry) []byte {
 	buf := new(bytes.Buffer)
