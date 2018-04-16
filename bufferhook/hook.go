@@ -17,7 +17,8 @@ var quotingRequired = regexp.MustCompile(`[^a-zA-Z0-9_/@^+.-]`)
 // be used in reporting later on. As bytes.Buffer is included in this
 // struct all methods of it can be used.
 type BufferHook struct {
-	levels []logrus.Level
+	levels   []logrus.Level
+	logStart time.Time
 
 	bytes.Buffer
 }
@@ -39,7 +40,8 @@ func New(level logrus.Level) *BufferHook {
 	}
 
 	return &BufferHook{
-		levels: levels,
+		levels:   levels,
+		logStart: time.Now(),
 	}
 }
 
@@ -47,7 +49,7 @@ func New(level logrus.Level) *BufferHook {
 func (b BufferHook) Levels() []logrus.Level { return b.levels }
 
 // Fire retrieves the event and generates the log line (interface logrus.Hook)
-func (b BufferHook) Fire(e *logrus.Entry) error {
+func (b *BufferHook) Fire(e *logrus.Entry) error {
 	_, err := b.Write(b.formatLine(e))
 	return err
 }
@@ -56,7 +58,7 @@ func (b BufferHook) formatLine(entry *logrus.Entry) []byte {
 	buf := new(bytes.Buffer)
 
 	levelText := strings.ToUpper(entry.Level.String())[0:4]
-	fmt.Fprintf(buf, "%s[%s] %-44s ", levelText, entry.Time.Format(time.RFC3339), entry.Message)
+	fmt.Fprintf(buf, "%s[%04d] %-44s ", levelText, entry.Time.Sub(b.logStart)/time.Second, entry.Message)
 
 	keys := []string{}
 	for k := range entry.Data {

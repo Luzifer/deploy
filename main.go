@@ -103,7 +103,7 @@ func main() {
 			success = true
 		}
 
-		if err := reporting.Execute(success, buf.Bytes()); err != nil {
+		if err := reporting.Execute(success, buf.String(), deployment); err != nil {
 			log.WithError(err).Error("Failed sending reports")
 		}
 	}

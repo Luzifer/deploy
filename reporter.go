@@ -1,6 +1,9 @@
 package main
 
-import "sync"
+import (
+	"os"
+	"sync"
+)
 
 var (
 	reporters     []reporter
@@ -9,9 +12,14 @@ var (
 
 type reporterList []reporter
 
-func (r reporterList) Execute(success bool, content []byte) error {
+func (r reporterList) Execute(success bool, content, deploymentID string) error {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+
 	for _, i := range r {
-		if err := i.Execute(success, content); err != nil {
+		if err := i.Execute(success, content, deploymentID, hostname); err != nil {
 			return err
 		}
 	}
@@ -27,7 +35,7 @@ type reporter interface {
 	InitializeFromURI(uri string) error
 	// Execute takes the content of the reporting and executes the
 	// delivery of the message to the specified targets.
-	Execute(success bool, content []byte) error
+	Execute(success bool, content, deploymentID, hostname string) error
 }
 
 func registerReporter(r reporter) {
