@@ -13,11 +13,12 @@ import (
 
 var (
 	cfg = struct {
-		FetchCron          string `flag:"fetch-cron,c" default:"* * * * *" description:"When to query for new deployments (cron syntax)"`
-		LogLevel           string `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
-		SoftwareIdentifier string `flag:"identifier,i" default:"default" description:"Software identifier to query deployments for"`
-		StorageURI         string `flag:"storage,s" default:"" description:"URI for the storage provider to use" validate:"nonzero"`
-		VersionAndExit     bool   `flag:"version" default:"false" description:"Prints current version and exits"`
+		FetchCron          string   `flag:"fetch-cron,c" default:"* * * * *" description:"When to query for new deployments (cron syntax)"`
+		LogLevel           string   `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
+		Reporters          []string `flag:"reporter,r" default:"" description:"Reporting URIs to notify about deployments"`
+		SoftwareIdentifier string   `flag:"identifier,i" default:"default" description:"Software identifier to query deployments for"`
+		StorageURI         string   `flag:"storage,s" default:"" description:"URI for the storage provider to use" validate:"nonzero"`
+		VersionAndExit     bool     `flag:"version" default:"false" description:"Prints current version and exits"`
 
 		logLevel log.Level
 	}{}
@@ -49,6 +50,11 @@ func main() {
 	storage, err := getConfiguredStorageProvider(cfg.StorageURI)
 	if err != nil {
 		log.WithError(err).Fatal("Unable to open storage")
+	}
+
+	reporting, err := initializeReporters(cfg.Reporters)
+	if err != nil {
+		log.WithError(err).Fatal("Unable to create reporters")
 	}
 
 	log.WithFields(log.Fields{
@@ -88,16 +94,18 @@ func main() {
 
 		logger.Info("Starting deployment")
 
+		var success bool
 		if err := executeDeployment(storage, deployment, logger); err != nil {
 			logger.WithError(err).Error("Deployment failed")
-			continue
+		} else {
+			lastDeployed = deployment
+			logger.Info("Deployment succeeded")
+			success = true
 		}
-		lastDeployed = deployment
 
-		logger.Info("Deployment succeeded")
-
-		// TODO: Replace with reporting
-		fmt.Printf("%s", buf.String())
+		if err := reporting.Execute(success, buf.Bytes()); err != nil {
+			log.WithError(err).Error("Failed sending reports")
+		}
 	}
 }
 
