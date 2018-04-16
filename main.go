@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/Luzifer/rconfig"
+	"github.com/contentflow/deploy/bufferhook"
 	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
 )
@@ -17,6 +18,8 @@ var (
 		SoftwareIdentifier string `flag:"identifier,i" default:"default" description:"Software identifier to query deployments for"`
 		StorageURI         string `flag:"storage,s" default:"" description:"URI for the storage provider to use" validate:"nonzero"`
 		VersionAndExit     bool   `flag:"version" default:"false" description:"Prints current version and exits"`
+
+		logLevel log.Level
 	}{}
 
 	version = "dev"
@@ -36,6 +39,7 @@ func init() {
 		log.WithError(err).Fatal("Unable to parse log level")
 	} else {
 		log.SetLevel(l)
+		cfg.logLevel = l
 	}
 }
 
@@ -61,14 +65,19 @@ func main() {
 	c.Start()
 
 	for range actChan {
-		log.Debug("Start fetching latest deployment")
+		buf := bufferhook.New(cfg.logLevel)
+		actLog := log.New()
+		actLog.SetLevel(cfg.logLevel)
+		actLog.AddHook(buf)
+
+		actLog.Debug("Start fetching latest deployment")
 		deployment, err := storage.GetLatestDeployment(cfg.SoftwareIdentifier)
 		if err != nil {
-			log.WithError(err).Error("Unable to get latest deployment ID")
+			actLog.WithError(err).Error("Unable to get latest deployment ID")
 			continue
 		}
 
-		logger := log.WithFields(log.Fields{
+		logger := actLog.WithFields(log.Fields{
 			"deployment_id": deployment,
 		})
 
@@ -77,7 +86,7 @@ func main() {
 			continue
 		}
 
-		logger.Debug("Starting deployment")
+		logger.Info("Starting deployment")
 
 		if err := executeDeployment(storage, deployment, logger); err != nil {
 			logger.WithError(err).Error("Deployment failed")
@@ -86,6 +95,9 @@ func main() {
 		lastDeployed = deployment
 
 		logger.Info("Deployment succeeded")
+
+		// TODO: Replace with reporting
+		fmt.Printf("%s", buf.String())
 	}
 }
 

@@ -114,7 +114,7 @@ func (a appspecHook) Execute(zipFile *zip.Reader, logger *log.Entry) error {
 
 	stdout := logger.WriterLevel(log.InfoLevel)
 	defer stdout.Close()
-	stderr := logger.WriterLevel(log.ErrorLevel)
+	stderr := logger.WriterLevel(log.WarnLevel)
 	defer stderr.Close()
 
 	cmd := exec.CommandContext(ctx, "/bin/bash")
