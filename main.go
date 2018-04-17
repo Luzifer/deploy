@@ -125,5 +125,5 @@ func executeDeployment(storage storageProvider, deploymentIdentifer string, logg
 		return err
 	}
 
-	return as.Execute(zipFile, logger)
+	return as.Execute(zipFile, logger, deploymentIdentifer)
 }
