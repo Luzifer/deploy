@@ -1,3 +1,5 @@
+export ARCHS=linux/amd64 linux/arm darwin/amd64
+
 default:
 
 jenkins:
