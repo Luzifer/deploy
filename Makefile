@@ -1,4 +1,5 @@
 export ARCHS=linux/amd64 linux/arm darwin/amd64
+export CGO_ENABLED=0
 
 default:
 
