@@ -1,3 +1,8 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/contentflow/deploy)](https://goreportcard.com/report/github.com/contentflow/deploy)
+![](https://badges.fyi/github/license/contentflow/deploy)
+![](https://badges.fyi/github/downloads/contentflow/deploy)
+![](https://badges.fyi/github/latest-release/contentflow/deploy)
+
 # Contentflow / deploy
 
 `deploy` is a small pull-based deployment daemon following some of the principles AWS CodeDeploy is using. The deployment artifact is roughly compatible between the two systems while some attributes are ignored. Also there is no central API containing information about deployments: The latest deployment is derived from the update time of the artifacts found in the respective storage provider.
