@@ -1,3 +1,7 @@
+# 0.2.3 / 2018-05-02
+
+  * Fix: Ensure the log directory before writing logs
+
 # 0.2.2 / 2018-05-02
 
   * Fix: Send other reports even when one of them failed
