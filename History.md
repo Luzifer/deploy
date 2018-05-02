@@ -1,3 +1,7 @@
+# 0.2.2 / 2018-05-02
+
+  * Fix: Send other reports even when one of them failed
+
 # 0.2.1 / 2018-04-18
 
   * Fix: Build static binaries
