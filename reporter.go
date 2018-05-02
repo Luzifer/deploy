@@ -12,19 +12,21 @@ var (
 
 type reporterList []reporter
 
-func (r reporterList) Execute(success bool, content, deploymentID string) error {
+func (r reporterList) Execute(success bool, content, deploymentID string) []error {
 	hostname, err := os.Hostname()
 	if err != nil {
-		return err
+		return []error{err}
 	}
+
+	var errors []error
 
 	for _, i := range r {
 		if err := i.Execute(success, content, deploymentID, hostname); err != nil {
-			return err
+			errors = append(errors, err)
 		}
 	}
 
-	return nil
+	return errors
 }
 
 type reporter interface {
