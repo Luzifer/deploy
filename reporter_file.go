@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"strings"
 	"time"
 )
@@ -44,6 +45,10 @@ func (r reporterFile) Execute(success bool, content, deploymentID, hostname stri
 		`{d}`: time.Now().Format(`2006-01-02`),
 	} {
 		fileName = strings.Replace(fileName, k, v, -1)
+	}
+
+	if err := os.MkdirAll(path.Dir(fileName), 0755); err != nil {
+		return err
 	}
 
 	fp, err := os.OpenFile(fileName, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
